@@ -17,7 +17,7 @@ class MyApp extends StatelessWidget {
       initialRoute: '/login',
       routes: {
         '/login': (context) => LoginScreen(),
-        '/home': (context) => HomeScreen(), // Маршрут для HomeScreen
+        '/home': (context) => HomeScreen(userId: 'some_user_id'.toString()), // Передаем userId как строку
         '/register': (context) => RegisterScreen(),
         '/forgot-password': (context) => ForgotPasswordScreen(),
       },
