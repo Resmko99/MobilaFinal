@@ -115,13 +115,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           ? userPhotoUrl!
                           : 'http://95.163.223.203:3000$userPhotoUrl'
                   )
-                      : null,
-                  child: userPhotoUrl == null || userPhotoUrl!.isEmpty
-                      ? Text(
-                    widget.userId.isNotEmpty ? widget.userId[0] : '?',
-                    style: TextStyle(fontSize: 40, color: Colors.white),
-                  )
-                      : null,
+                      : null
                 ),
               ),
               SizedBox(height: 16),

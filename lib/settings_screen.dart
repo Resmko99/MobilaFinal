@@ -202,15 +202,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     backgroundImage: userPhotoUrl != null && userPhotoUrl!.isNotEmpty
                         ? NetworkImage('http://95.163.223.203:3000$userPhotoUrl')
                         : null,
-                    child: userPhotoUrl == null
-                        ? Text(
-                      userName.isNotEmpty
-                          ? userName[0].toUpperCase()
-                          : "?",
-                      style:
-                      TextStyle(fontSize: 40, color: Colors.white),
-                    )
-                        : null,
                   ),
                   IconButton(
                     icon: Icon(Icons.camera_alt, color: Colors.white),

@@ -210,13 +210,6 @@ class _HomeScreenState extends State<HomeScreen> {
                             backgroundImage: post['avatar_url'] != null
                                 ? NetworkImage('http://95.163.223.203:3000${post['avatar_url']}')
                                 : null,
-                            backgroundColor: Colors.grey,
-                            child: post['avatar_url'] == null
-                                ? Text(
-                              post['user_name']?.substring(0, 1) ?? '?',
-                              style: TextStyle(color: Colors.white),
-                            )
-                                : null,
                           ),
                           SizedBox(width: 8),
                           Column(
@@ -300,7 +293,11 @@ class _HomeScreenState extends State<HomeScreen> {
             accountName: Text(userName),
             accountEmail: Text(userPhoneNumber),
             currentAccountPicture: CircleAvatar(
-              backgroundImage: NetworkImage(userPhotoUrl ?? 'https://via.placeholder.com/150'),
+              radius: 30,
+              backgroundColor: Colors.green,
+              backgroundImage: userPhotoUrl != null && userPhotoUrl!.isNotEmpty
+                  ? NetworkImage('http://95.163.223.203:3000$userPhotoUrl')
+                  : null,
             ),
             decoration: BoxDecoration(
               gradient: LinearGradient(
@@ -342,40 +339,66 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Future<void> _showAddPostDialog(BuildContext context) async {
+  void _showAddPostDialog(BuildContext context) {
+    TextEditingController postController = TextEditingController();
     showDialog(
       context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text('Добавить пост'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                decoration: InputDecoration(hintText: 'Введите текст поста'),
-              ),
-              SizedBox(height: 12),
-              ElevatedButton(
-                onPressed: _pickImage,
-                child: Text('Выбрать изображение'),
-              ),
-              if (_selectedImage != null)
-                Image.file(_selectedImage!), // Отображение выбранного изображения
-            ],
+      builder: (context) {
+        return Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
           ),
-          actions: <Widget>[
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: Text('Отмена'),
+          backgroundColor: Colors.black.withOpacity(0.8),
+          child: Container(
+            padding: EdgeInsets.all(16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'Новый пост',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                TextField(
+                  controller: postController,
+                  style: TextStyle(color: Colors.white),
+                  maxLines: 5,
+                  decoration: InputDecoration(
+                    hintText: 'Введите текст поста...',
+                    hintStyle: TextStyle(color: Colors.white60),
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+                SizedBox(height: 8),
+                Row(
+                  children: [
+                    ElevatedButton.icon(
+                      onPressed: _pickImage,
+                      icon: Icon(Icons.photo),
+                      label: Text('Выбрать фото'),
+                    ),
+                    if (_selectedImage != null)
+                      Text('Фото выбрано', style: TextStyle(color: Colors.green)),
+                  ],
+                ),
+                SizedBox(height: 8),
+                ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.blue.shade400,
+                    ),
+                    onPressed: () {
+                      _createPost(postController.text);
+                      Navigator.pop(context);
+                      _selectedImage = null;
+                    },
+                    child: Text('Создать')
+                ),
+              ],
             ),
-            TextButton(
-              onPressed: () {
-                // Здесь можно добавить логику для добавления поста
-                Navigator.of(context).pop();
-              },
-              child: Text('Добавить'),
-            ),
-          ],
+          ),
         );
       },
     );
@@ -423,11 +446,6 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _createPost(String text) async {
-    if (text.trim().isEmpty) {
-      print('Ошибка: текст поста не может быть пустым');
-      return;
-    }
-
     try {
       // Получаем текущее время и дату
       DateTime now = DateTime.now().toLocal();
@@ -445,6 +463,12 @@ class _HomeScreenState extends State<HomeScreen> {
         }
       }
 
+      // Проверяем, что хотя бы одно поле заполнено
+      if (text.trim().isEmpty && imageUrl == null) {
+        print('Ошибка: текст и изображение не могут быть пустыми одновременно');
+        return;
+      }
+
       // Отправляем пост с изображением
       final response = await http.post(
         Uri.parse('http://95.163.223.203:3000/add_posts'),
@@ -452,16 +476,19 @@ class _HomeScreenState extends State<HomeScreen> {
         body: json.encode({
           'user_id': widget.userId,
           'user_name': userName,
-          'post_text': text,
+          'post_text': text.isEmpty ? null : text,
           'post_date': currentDate,
           'post_time': currentTime,
-          'post_picture': imageUrl,  // Добавляем URL изображения, если оно есть
+          'post_picture': imageUrl, // Добавляем URL изображения, если оно есть
         }),
       );
 
       if (response.statusCode == 201) {
         print('Пост успешно добавлен');
         fetchPosts(); // Обновляем список постов
+        setState(() {
+          _selectedImage = null; // Сбрасываем выбранное изображение
+        });
       } else {
         print('Ошибка при создании поста. Статус: ${response.statusCode}');
       }
